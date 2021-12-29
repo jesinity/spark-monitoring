@@ -24,45 +24,39 @@ class RpcMetricsReceiver(val sparkEnv: SparkEnv,
   import MetricsProxiesReflectionImplicits._
 
   override def receive: PartialFunction[Any, Unit] = {
-    case CounterMessage(namespace, metricName, value) => {
+    case CounterMessage(namespace, metricName, value) =>
       getMetric[Counter](namespace, metricName) match {
-        case Some(counter) => {
-          logDebug(s"inc(${value}) called on counter '${metricName}', in namespace '${namespace}'")
+        case Some(counter) =>
+          logDebug(s"inc($value) called on counter '$metricName', in namespace '$namespace'")
           counter.inc(value)
-        }
-        case None => logWarning(s"Counter '${metricName}' not found")
+        case None => logWarning(s"Counter '$metricName' not found")
       }
-    }
-    case HistogramMessage(namespace, metricName, value, reservoirClass) => {
+    case HistogramMessage(namespace, metricName, value, reservoirClass) =>
       getMetric[Histogram](namespace, metricName) match {
-        case Some(histogram) => {
+        case Some(histogram) =>
           val histogramReservoirClass = histogram.getReservoirClass
           if (histogramReservoirClass != reservoirClass) {
             logWarning(s"Proxy reservoir class ${reservoirClass.getCanonicalName} does not match driver reservoir class ${histogramReservoirClass.getCanonicalName}")
           } else {
             histogram.update(value)
           }
-        }
-        case None => logWarning(s"Histogram '${metricName}' not found")
+        case None => logWarning(s"Histogram '$metricName' not found")
       }
-    }
-    case MeterMessage(namespace, metricName, value, clockClass) => {
+    case MeterMessage(namespace, metricName, value, clockClass) =>
       getMetric[Meter](namespace, metricName) match {
-        case Some(meter) => {
+        case Some(meter) =>
           val meterClockClass = meter.getClockClass
           if (meterClockClass != clockClass) {
             logWarning(s"Proxy meter class ${clockClass.getCanonicalName} does not match driver clock class ${meterClockClass.getCanonicalName}")
           } else {
             meter.mark(value)
           }
-        }
-        case None => logWarning(s"Meter '${metricName}' not found")
+        case None => logWarning(s"Meter '$metricName' not found")
       }
-    }
 
-    case TimerMessage(namespace, metricName, value, unit, reservoirClass, clockClass) => {
+    case TimerMessage(namespace, metricName, value, unit, reservoirClass, clockClass) =>
       getMetric[Timer](namespace, metricName) match {
-        case Some(timer) => {
+        case Some(timer) =>
           val timerClockClass = timer.getClockClass
           val timerReservoirClass = timer.getHistogram.getReservoirClass
           if (timerClockClass != clockClass) {
@@ -73,29 +67,24 @@ class RpcMetricsReceiver(val sparkEnv: SparkEnv,
             // Everything looks good
             timer.update(value, unit)
           }
-        }
-        case None => logWarning(s"Timer '${metricName}' not found")
+        case None => logWarning(s"Timer '$metricName' not found")
       }
-    }
-    case SettableGaugeMessage(namespace, metricName, value) => {
+    case SettableGaugeMessage(namespace, metricName, value) =>
       getMetric[SettableGauge[Any]](namespace, metricName) match {
         case Some(gauge) => gauge.set(value)
-        case None => logWarning(s"SettableGauge '${metricName}' not found")
+        case None => logWarning(s"SettableGauge '$metricName' not found")
       }
-    }
     case message: Any => logWarning(s"Unsupported message type: $message")
   }
 
   private[metrics] def getMetric[T <: Metric](namespace: String, metricName: String)(implicit tag: ClassTag[T]): Option[T] = {
     metricsSources.get(namespace) match {
-      case Some(metrics) => {
+      case Some(metrics) =>
         metrics.get(metricName) match {
-          case Some(metric) => {
+          case Some(metric) =>
             if (tag.runtimeClass.isInstance(metric)) Some(metric.asInstanceOf[T]) else None
-          }
           case _ => None
         }
-      }
       case _ => None
     }
   }

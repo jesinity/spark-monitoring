@@ -44,7 +44,7 @@ object SparkInformation {
     }
 
     val sparkInfo = Option(SparkEnv.get) match {
-      case Some(e) => {
+      case Some(e) =>
         val conf = e.conf
         Map(
           "applicationId" -> conf.getOption(APPLICATION_ID),
@@ -54,15 +54,13 @@ object SparkInformation {
           "executorId" -> Option(e.executorId),
           "nodeType" -> nodeType
         )
-      }
-      case None => {
+      case None =>
         // If we don't have a SparkEnv, we could be on any node type, really.
         Map(
           "clusterId" -> sys.env.get(DB_CLUSTER_ID_ENVIRONMENT_VARIABLE),
           "clusterName" -> sys.env.get(DB_CLUSTER_NAME_ENVIRONMENT_VARIABLE),
           "nodeType" -> nodeType
         )
-      }
     }
 
     // We will remove None values and convert to Map[String, String] to make conversion

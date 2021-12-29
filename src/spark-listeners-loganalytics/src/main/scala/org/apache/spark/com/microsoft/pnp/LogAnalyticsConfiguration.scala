@@ -7,6 +7,8 @@ private[spark] trait LogAnalyticsConfiguration extends Logging {
 
   protected def getSecret: Option[String]
 
+  protected def getEndpoint: Option[String]
+
   protected def getLogType: String
 
   protected def getTimestampFieldName: Option[String]
@@ -23,6 +25,12 @@ private[spark] trait LogAnalyticsConfiguration extends Logging {
   val secret: String = {
     val value = getSecret
     require(value.isDefined, "A Log Analytics Workspace Key is required")
+    value.get
+  }
+
+  val endpoint: String = {
+    val value = getEndpoint
+    require(value.isDefined, "A Log Analytics Workspace Endpoint is required")
     value.get
   }
 

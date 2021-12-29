@@ -12,6 +12,8 @@ private[spark] object LogAnalyticsListenerSinkConfiguration {
   // We'll name this secret so Spark will redact it.
   private[spark] val SECRET = CONFIG_PREFIX + ".secret"
 
+  private[spark] val ENDPOINT = CONFIG_PREFIX + ".endpoint"
+
   private[spark] val LOG_TYPE = CONFIG_PREFIX + ".logType"
 
   private[spark] val DEFAULT_LOG_TYPE = "SparkListenerEvent"
@@ -38,6 +40,10 @@ private[spark] class LogAnalyticsListenerSinkConfiguration(sparkConf: SparkConf)
     // Match spark priority order
     //sparkConf.getOption(SECRET).orElse(sys.env.get(ENV_LOG_ANALYTICS_SECRET))
     sparkConf.getOption(SECRET).orElse(Option(LogAnalyticsEnvironment.getWorkspaceKey))
+  }
+
+  override def getEndpoint: Option[String] = {
+    sparkConf.getOption(ENDPOINT).orElse(Option(LogAnalyticsEnvironment.getWorkspaceEndpoint))
   }
 
   override def getLogType: String = sparkConf.get(LOG_TYPE, DEFAULT_LOG_TYPE)

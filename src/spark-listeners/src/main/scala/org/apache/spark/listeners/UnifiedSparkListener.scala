@@ -52,7 +52,7 @@ class UnifiedSparkListener(override val conf: SparkConf)
       case Some(listenerSinkClassName) => listenerSinkClassName
       case None => throw new SparkException("spark.unifiedListener.sink setting is required")
     }
-    logInfo(s"Creating listener sink: ${sink}")
+    logInfo(s"Creating listener sink: $sink")
     org.apache.spark.util.Utils.loadExtensions(
       classOf[SparkListenerSink],
       Seq(sink),
@@ -81,16 +81,12 @@ class UnifiedSparkListener(override val conf: SparkConf)
   }
 
   private[spark] def sendToSink(json: Option[JValue]): Unit = {
-    try {
-      json match {
-        case Some(j) => {
-          logDebug(s"Sending event to listener sink: ${compact(j)}")
-          this.listenerSink.logEvent(json)
-        }
-        case None => {
-          logWarning("json value was None")
-        }
-      }
+    try json match {
+      case Some(j) =>
+        logDebug(s"Sending event to listener sink: ${compact(j)}")
+        this.listenerSink.logEvent(json)
+      case None =>
+        logWarning("json value was None")
     } catch {
       case NonFatal(e) =>
         logError(s"Error sending to listener sink: $e")

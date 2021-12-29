@@ -1,8 +1,10 @@
 package com.microsoft.pnp;
 
 public class LogAnalyticsEnvironment {
+
     public static final String LOG_ANALYTICS_WORKSPACE_ID = "LOG_ANALYTICS_WORKSPACE_ID";
     public static final String LOG_ANALYTICS_WORKSPACE_KEY = "LOG_ANALYTICS_WORKSPACE_KEY";
+    public static final String LOG_ANALYTICS_WORKSPACE_ENDPOINT = "LOG_ANALYTICS_WORKSPACE_ENDPOINT";
 
     public static String getWorkspaceId() {
         return System.getenv(LOG_ANALYTICS_WORKSPACE_ID);
@@ -10,5 +12,9 @@ public class LogAnalyticsEnvironment {
 
     public static String getWorkspaceKey() {
         return System.getenv(LOG_ANALYTICS_WORKSPACE_KEY);
+    }
+
+    public static String getWorkspaceEndpoint() {
+        return System.getenv(LOG_ANALYTICS_WORKSPACE_ENDPOINT);
     }
 }

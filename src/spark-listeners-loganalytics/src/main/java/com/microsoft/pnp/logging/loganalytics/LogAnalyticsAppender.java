@@ -4,6 +4,8 @@ import com.microsoft.pnp.LogAnalyticsEnvironment;
 import com.microsoft.pnp.client.loganalytics.LogAnalyticsClient;
 import com.microsoft.pnp.client.loganalytics.LogAnalyticsSendBufferClient;
 import com.microsoft.pnp.logging.JSONLayout;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
 import org.apache.log4j.AppenderSkeleton;
 import org.apache.log4j.Layout;
 import org.apache.log4j.helpers.LogLog;
@@ -13,13 +15,13 @@ import org.apache.log4j.spi.LoggingEvent;
 import static com.microsoft.pnp.logging.JSONLayout.TIMESTAMP_FIELD_NAME;
 
 public class LogAnalyticsAppender extends AppenderSkeleton {
-    private static final String LA_SPARKLOGGINGEVENT_NAME_REGEX=System.getenv().getOrDefault("LA_SPARKLOGGINGEVENT_NAME_REGEX", "");
-    private static final String LA_SPARKLOGGINGEVENT_MESSAGE_REGEX=System.getenv().getOrDefault("LA_SPARKLOGGINGEVENT_MESSAGE_REGEX", "");
+    private static final String LA_SPARKLOGGINGEVENT_NAME_REGEX = System.getenv().getOrDefault("LA_SPARKLOGGINGEVENT_NAME_REGEX", "");
+    private static final String LA_SPARKLOGGINGEVENT_MESSAGE_REGEX = System.getenv().getOrDefault("LA_SPARKLOGGINGEVENT_MESSAGE_REGEX", "");
 
     private static final Filter DEFAULT_FILTER = new Filter() {
         @Override
         public int decide(LoggingEvent loggingEvent) {
-            String loggerName=loggingEvent.getLoggerName();
+            String loggerName = loggingEvent.getLoggerName();
             // ignore logs from org.apache.http to avoid infinite loop on logger error
             if (loggerName.startsWith("org.apache.http")) {
                 return Filter.DENY;
@@ -41,6 +43,7 @@ public class LogAnalyticsAppender extends AppenderSkeleton {
     // We will default to environment so the properties file can override
     private String workspaceId = LogAnalyticsEnvironment.getWorkspaceId();
     private String secret = LogAnalyticsEnvironment.getWorkspaceKey();
+    private String endpoint = LogAnalyticsEnvironment.getWorkspaceEndpoint();
     private String logType = DEFAULT_LOG_TYPE;
     private LogAnalyticsSendBufferClient client;
 
@@ -52,8 +55,20 @@ public class LogAnalyticsAppender extends AppenderSkeleton {
 
     @Override
     public void activateOptions() {
+
+        CloseableHttpClient httpClient = HttpClients.custom()
+                .disableAuthCaching()
+                .disableContentCompression()
+                .disableCookieManagement()
+                .build();
+
         this.client = new LogAnalyticsSendBufferClient(
-                new LogAnalyticsClient(this.workspaceId, this.secret),
+                new LogAnalyticsClient(
+                        this.workspaceId,
+                        this.secret,
+                        httpClient,
+                        endpoint
+                ),
                 this.logType
         );
     }
@@ -119,5 +134,13 @@ public class LogAnalyticsAppender extends AppenderSkeleton {
 
     public void setLogType(String logType) {
         this.logType = logType;
+    }
+
+    public String getEndpoint() {
+        return endpoint;
+    }
+
+    public void setEndpoint(String endpoint) {
+        this.endpoint = endpoint;
     }
 }
